@@ -4,7 +4,7 @@ import os
 
 BOT_TOKEN = '8671923612:AAHXhf--OplXIcEkKC7ibvW5KMwKZyVcZqo'
 # Укажи свой домен на Beget, например: https://diesel.ru
-WEBHOOK_URL = 'https://v98928j7.beget.tech/webhook'
+WEBHOOK_URL = 'https://diesel-bot.onrender.com/webhook'
 
 bot = telebot.TeleBot(BOT_TOKEN)
 app = Flask(__name__)
