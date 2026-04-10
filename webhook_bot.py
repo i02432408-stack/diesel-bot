@@ -7,33 +7,32 @@ WEBHOOK_URL = 'https://diesel-bot.onrender.com/webhook'
 bot = telebot.TeleBot(BOT_TOKEN)
 app = Flask(__name__)
 
-# Хранилище заявок: { 'username': { данные заявки } }
 bookings = {}
 
+def cors(response):
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Methods'] = 'POST, GET, OPTIONS'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+    return response
 
-# ── Сайт шлёт сюда заявку ─────────────────────────────────────────────────
-@app.route('/booking', methods=['POST'])
+@app.route('/booking', methods=['POST', 'OPTIONS'])
 def receive_booking():
+    if request.method == 'OPTIONS':
+        return cors(jsonify({'ok': True}))
     data = request.get_json()
     if not data:
-        return jsonify({'ok': False, 'error': 'no data'}), 400
-
+        return cors(jsonify({'ok': False, 'error': 'no data'})), 400
     tg = data.get('tg', '').replace('@', '').lower()
     if tg:
         bookings[tg] = data
+    return cors(jsonify({'ok': True}))
 
-    return jsonify({'ok': True}), 200
-
-
-# ── Telegram webhook ───────────────────────────────────────────────────────
 @app.route('/webhook', methods=['POST'])
 def webhook():
     update = telebot.types.Update.de_json(request.get_json())
     bot.process_new_updates([update])
     return 'ok', 200
 
-
-# ── Обработка /start ───────────────────────────────────────────────────────
 @bot.message_handler(commands=['start'])
 def start(message):
     username = (message.from_user.username or '').lower()
@@ -67,13 +66,11 @@ def start(message):
 
     bot.send_message(message.chat.id, text)
 
-
 @bot.message_handler(func=lambda m: True)
 def any_message(message):
     bot.send_message(message.chat.id,
         'Для записи воспользуйтесь нашим сайтом.\nПо вопросам звоните: +7 000 000-00-00'
     )
-
 
 @app.route('/set_webhook')
 def set_webhook():
@@ -83,11 +80,9 @@ def set_webhook():
         return 'Webhook установлен: ' + WEBHOOK_URL
     return 'Ошибка установки webhook'
 
-
 @app.route('/')
 def index():
     return 'Бот Дизель работает!'
-
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
